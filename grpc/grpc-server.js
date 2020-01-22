@@ -58,16 +58,18 @@ module.exports = function (RED) {
                 if (node.protoPackage) {
                     services = proto[node.protoPackage];
                 }
-                var servicesNames = Object.keys(services); 
+
                 // For each service
-                for(var i in servicesNames) {
-                    var methods = Object.keys(services[servicesNames[i]].service);
-                    // For each methods of the service
-                    for(var j in methods) {
-                        protoFunctions[methods[j]] = generateFunction(node, servicesNames[i], methods[j], protoFunctions);
+                for (var serviceName in services) {
+                    if ('service' in services[serviceName]) {
+                        //console.log(serviceName);
+                        var methods = Object.keys(services[serviceName].service);
+                        for(var methodId in methods) {
+                            protoFunctions[methods[methodId]] = generateFunction(node, serviceName, methods[methodId], protoFunctions);
+                        }
+                        // Add stub methods for each methods and services declared in the proto file
+                        server.addService(services[serviceName].service, protoFunctions);
                     }
-                    // Add stub methods for each methods and services declared in the proto file
-                    server.addService(services[servicesNames[i]].service, protoFunctions)		
                 }
                 
                 server.bind(node.server + ":" + node.port, grpc.ServerCredentials.createInsecure());
